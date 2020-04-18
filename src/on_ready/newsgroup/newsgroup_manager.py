@@ -125,21 +125,19 @@ class NewsGroupManager:
                     raise exe
                 await LogManager.error_log(self.client, "Newsgroup error for news : {}\n{}".format(i, exe))
 
+        if len(news) == 0:
+            return
+
         group["last_update"] = (last_update + timedelta(seconds=1))\
             .astimezone(pytz.timezone("Europe/Paris")) \
             .strftime(self.date_format)
 
-        print("group {}: {}".format(group["name"], datetime.strptime(group["last_update"], self.date_format)))
-
         b, reason = self.api_manager.edit_data("news-groups",
                                                id=group["id"],
-                                               name=group["name"],
-                                               slug=group["slug"],
-                                               last_update=group["last_update"],
-                                               channels=group["channels"])
+                                               last_update=group["last_update"])
 
         if not b:
-            print("Err edit data: {}".format(reason))
+            raise Exception("cannot send information to server, reason: {}".format(reason))
 
     async def get_news(self):
         try:
