@@ -22,6 +22,8 @@ class NewsGroupManager:
     delta_time: str = None
     client: discord.Client
     api_manager: APIManager
+    stop_on_error: bool = None
+    date_format: str = None
 
     def __init__(self, client: discord.Client):
         self.client = client
@@ -47,6 +49,8 @@ class NewsGroupManager:
             self.config = yaml.safe_load(file)
         self.address = self.config["address"]
         self.encoding = self.config["encoding"]
+        self.date_format = self.config["date_format"]
+        self.stop_on_error = self.config["stop_on_error"]
         self.delta_time = self.config["delta_time"]
 
     def get_info_from_news(self, news_id: str) -> Dict:
@@ -104,22 +108,38 @@ class NewsGroupManager:
         return date
 
     async def print_news_from_group(self, group: Dict):
-        last_update: datetime = datetime.strptime(group["last_update"], "%d/%m/%Y %H:%M:%S") \
+        last_update: datetime = datetime.strptime(group["last_update"], self.date_format) \
             .astimezone(pytz.timezone("Europe/Paris"))
 
         _, news = self.NNTP.newnews(group['slug'], last_update)
 
         for i, news_id in enumerate(news):
             try:
-                d: datetime = await self.print_news(group.copy(), news_id)
+                d: datetime = (await self.print_news(group.copy(), news_id)).astimezone(pytz.timezone("Europe/Paris"))
+                print(d)
                 if d > last_update:
                     last_update = d
             except Exception as exe:
+                print("err for news {}".format(i))
+                if self.stop_on_error:
+                    raise exe
                 await LogManager.error_log(self.client, "Newsgroup error for news : {}\n{}".format(i, exe))
 
         group["last_update"] = (last_update + timedelta(seconds=1))\
             .astimezone(pytz.timezone("Europe/Paris")) \
-            .strftime("%d/%m/%Y %H:%M:%S")
+            .strftime(self.date_format)
+
+        print("group {}: {}".format(group["name"], datetime.strptime(group["last_update"], self.date_format)))
+
+        b, reason = self.api_manager.edit_data("news-groups",
+                                               id=group["id"],
+                                               name=group["name"],
+                                               slug=group["slug"],
+                                               last_update=group["last_update"],
+                                               channels=group["channels"])
+
+        if not b:
+            print("Err edit data: {}".format(reason))
 
     async def get_news(self):
         try:
@@ -134,8 +154,6 @@ class NewsGroupManager:
             # Start the connection
             self.open_connection()
 
-            await LogManager.error_log(self.client, "Res: {}\n".format(res))
-
             # For each news group, do magic
             for group in res:
                 await self.print_news_from_group(group)
@@ -146,4 +164,6 @@ class NewsGroupManager:
 
             await asyncio.sleep(int(self.delta_time))
         except Exception as exe:
+            if self.stop_on_error:
+                raise exe
             await LogManager.error_log(self.client, "Newsgroup error while updating\n{}".format(exe))
