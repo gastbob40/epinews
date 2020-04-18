@@ -32,7 +32,7 @@ class APIManager:
     def edit_data(self, type, id, **body):
         headers = self.get_headers()
 
-        r = requests.put(self.base_url + type + '/' + str(id) + '/', json=body, headers=headers)
+        r = requests.patch(self.base_url + type + '/' + str(id) + '/', json=body, headers=headers)
 
         if not r.ok:
             return False, r.reason
