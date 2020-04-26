@@ -10,6 +10,5 @@ def get_date(date: str) -> datetime:
         try:
             return datetime.strptime(date, f)
         except Exception as e:
-            # print("Err : " + str(e))
             continue
-    return datetime.now()
+    raise Exception("no matching format for date : {}".format(date))
