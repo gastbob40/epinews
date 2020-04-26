@@ -4,13 +4,13 @@
 ![python](https://img.shields.io/badge/Language-Python-blueviolet)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-![EpiModo Banner](src/assets/banner.png)
+![EpiNews Banner](src/assets/banner.png)
 
 ## About
 
 EpiNews is a discord bot to cast NTTP news on discord.
 
-EpiModo is a project by [gastbob40](https://github.com/gastbob40) and [Baptman21](https://github.com/bat021).
+EpiNews is a project by [gastbob40](https://github.com/gastbob40) and [Baptman21](https://github.com/bat021).
 
 ## Requirements
 
