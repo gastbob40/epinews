@@ -66,11 +66,9 @@ class NewsGroupManager:
             info[s[0]] = nntplib.decode_header(s[1])
         return info
 
-    async def print_news(self, group: Dict, news_id: str):
-        info = self.get_info_from_news(news_id)
+    async def print_news(self, group: Dict, news_id: str, info: Dict, date: datetime):
         author = info["From"]
         subject = info["Subject"]
-        date = get_date(info["Date"])
 
         _, body = self.NNTP.body(news_id)
         content = ""
@@ -105,20 +103,22 @@ class NewsGroupManager:
             for guild in group['channels']:
                 await self.client.get_channel(int(guild['channel_id'])).send(embed=embed)
 
-        return date
-
     async def print_news_from_group(self, group: Dict):
-        last_update: datetime = datetime.strptime(group["last_update"], self.date_format) \
-            .astimezone(pytz.timezone("Europe/Paris"))
+        last_update: datetime = datetime.strptime(group["last_update"], self.date_format)
 
         _, news = self.NNTP.newnews(group['slug'], last_update)
+        print("last update: {}".format(last_update.strftime("%a, %d %b %Y %H:%M:%S %Z")))
 
         for i, news_id in enumerate(news):
             try:
-                d: datetime = (await self.print_news(group.copy(), news_id)).astimezone(pytz.timezone("Europe/Paris"))
-                print(d)
-                if d > last_update:
-                    last_update = d
+                info = self.get_info_from_news(news_id)
+                date = get_date(info["Date"])
+                if date <= last_update:
+                    print("nntp should not have sent this news")
+                await self.print_news(group.copy(), news_id, info, date)
+                print("date: {}".format(date.strftime("%a, %d %b %Y %H:%M:%S %Z")))
+                if date > last_update:
+                    last_update = date
             except Exception as exe:
                 print("err for news {}".format(i))
                 if self.stop_on_error:
@@ -129,7 +129,6 @@ class NewsGroupManager:
             return
 
         group["last_update"] = (last_update + timedelta(seconds=1))\
-            .astimezone(pytz.timezone("Europe/Paris")) \
             .strftime(self.date_format)
 
         b, reason = self.api_manager.edit_data("news-groups",
