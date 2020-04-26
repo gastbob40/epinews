@@ -30,7 +30,7 @@ class EmbedsManager:
         if is_response:
             embed = discord.Embed(color=0xc40c0c, title="Re:" + title)
         else:
-            embed = discord.Embed(color=0x0080ff, title=title)
+            embed = discord.Embed(color=0xf56200, title=title)
         for tag in tags:
             color = sum([ord(c) for c in tag]) % 5
             embed.add_field(name="​", value="```{}{}```".format(EmbedsManager.colors[color], tag), inline=True)
