@@ -1,5 +1,0 @@
-address: news.epita.fr
-encoding: utf-8
-delta_time: 600
-stop_on_error: False
-date_format: "%Y-%m-%dT%H:%M:%S%z"

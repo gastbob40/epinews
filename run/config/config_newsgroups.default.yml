@@ -1,0 +1,5 @@
+address: ~          # The address of the newsgroup server
+encoding: ~         # The encoding format
+delta_time: ~       # Time between update (in second)
+stop_on_error: ~    # True if the bot should crash in case of error
+date_format: ~      # The date format
