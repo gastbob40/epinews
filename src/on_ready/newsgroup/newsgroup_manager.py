@@ -111,14 +111,14 @@ class NewsGroupManager:
 
         _, news = self.NNTP.newnews(group['slug'], last_update)
 
-        for i, news_id in enumerate(news):
+        for news_id in list(dict.fromkeys(news)):
             try:
                 await self.print_news(group.copy(), news_id)
             except Exception as exe:
-                print("err for news {}".format(i))
+                print("err for news {}".format(news_id))
                 if self.stop_on_error:
                     raise exe
-                await LogManager.error_log(self.client, "Newsgroup error for news : {}\n{}".format(i, exe))
+                await LogManager.error_log(self.client, "Newsgroup error for news : {}\n{}".format(news_id, exe))
 
         if len(news) == 0:
             return
