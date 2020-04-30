@@ -151,11 +151,9 @@ class NewsGroupManager:
                 await self.print_news_from_group(group)
 
             self.close_connection()
-
-            # TODO: push updated res with API
-
-            await asyncio.sleep(int(self.delta_time))
         except Exception as exe:
             if self.stop_on_error:
                 raise exe
             await LogManager.error_log(self.client, "Newsgroup error while updating\n{}".format(exe))
+
+        await asyncio.sleep(int(self.delta_time))
