@@ -8,9 +8,15 @@ with open('run/config/tokens.yml', 'r') as file:
 
 client = discord.Client()
 
+started = False
+
 
 @client.event
 async def on_ready():
+    global started
+    if started:
+        return
+    started = True
     await on_ready_handler(client)
 
 
