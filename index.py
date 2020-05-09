@@ -20,10 +20,4 @@ async def on_ready():
     await on_ready_handler(client)
 
 
-@client.event
-async def on_disconnect():
-    global started
-    started = False
-
-
 client.run(tokens['discord_token'])
