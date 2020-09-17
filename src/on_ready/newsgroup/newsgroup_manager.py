@@ -1,19 +1,20 @@
-import nntplib
-from typing import *
-from datetime import datetime, timedelta
-import yaml
-import pytz
-import discord
 import asyncio
+import nntplib
+import re
+from datetime import datetime, timedelta
+from typing import *
 
-from src.utils.datetime_utils import get_date
-from src.utils.log_manager import LogManager
-from src.utils.embed_manager import EmbedsManager
+import discord
+import pytz
+import yaml
+
 from src.utils.api_manager import APIManager
+from src.utils.datetime_utils import get_date
+from src.utils.embed_manager import EmbedsManager
+from src.utils.log_manager import LogManager
 
 
 class NewsGroupManager:
-
     NNTP: nntplib.NNTP = None
     address: str = None
     groups: Dict = None
@@ -24,6 +25,7 @@ class NewsGroupManager:
     api_manager: APIManager
     stop_on_error: bool = None
     date_format: str = None
+    assistants: List = None
 
     def __init__(self, client: discord.Client):
         self.client = client
@@ -52,6 +54,7 @@ class NewsGroupManager:
         self.date_format = self.config["date_format"]
         self.stop_on_error = self.config["stop_on_error"]
         self.delta_time = self.config["delta_time"]
+        self.assistants = self.config["assistants"]
 
     def get_info_from_news(self, news_id: str) -> Dict:
         info = dict()
@@ -69,6 +72,8 @@ class NewsGroupManager:
     async def print_news(self, group: Dict, news_id: str):
         info = self.get_info_from_news(news_id)
         author = info["From"]
+        match = re.search('.*<(.*)>', author)
+        mail = match.group(1) if match else ""
         subject = info["Subject"]
         date = get_date(info["Date"])
 
@@ -83,6 +88,7 @@ class NewsGroupManager:
             subject = subject[4:]
             is_response = True
 
+        is_assistant = mail in self.assistants
         # get the tags
         tags = []
         s = subject.split("]", 1)
@@ -95,10 +101,17 @@ class NewsGroupManager:
         msg = [content[i:i + 5117] for i in range(0, len(content), 5117)]
 
         # print msg in every channel newsgroup_filler_embed
-        embed = EmbedsManager.newsgroup_embed(subject, tags, msg[0], author, date, group["name"],
-                                              is_response)
+        if is_assistant:
+            embed = EmbedsManager.newsgroup_embed_assistant(subject, tags, msg[0], author,
+                                                            date, group["name"], is_response)
+        else:
+            embed = EmbedsManager.newsgroup_embed(subject, tags, author, date, group["name"], is_response)
+
         for guild in group['channels']:
             await self.client.get_channel(int(guild['channel_id'])).send(embed=embed)
+
+        if not is_assistant:
+            return
 
         for i in range(1, len(msg)):
             embed = EmbedsManager.newsgroup_filler_embed("..." + msg[i], author, date, group["name"], is_response)
@@ -107,7 +120,7 @@ class NewsGroupManager:
 
     async def print_news_from_group(self, group: Dict):
         last_update: datetime = datetime.strptime(group["last_update"], self.date_format) \
-                                        .astimezone(pytz.timezone("Europe/Paris"))
+            .astimezone(pytz.timezone("Europe/Paris"))
 
         _, news = self.NNTP.newnews(group['slug'], last_update)
 
@@ -122,7 +135,7 @@ class NewsGroupManager:
 
         if len(news) == 0:
             return
-        group["last_update"] = (datetime.now() + timedelta(seconds=1))\
+        group["last_update"] = (datetime.now() + timedelta(seconds=1)) \
             .astimezone(pytz.timezone("Europe/Paris")) \
             .strftime(self.date_format)
 

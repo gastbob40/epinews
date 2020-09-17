@@ -26,7 +26,24 @@ class EmbedsManager:
     colors = ["css\n", "http\n", "cs\n# ", "yaml\n", "md\n# ", "\n"]
 
     @staticmethod
-    def newsgroup_embed(title, tags, msg, author, date: datetime, group, is_response):
+    def newsgroup_embed_assistant(title, tags, msg, author, date: datetime, group, is_response):
+        if is_response:
+            embed = discord.Embed(color=0x35e002, title="Msg Assistant - " + ("Re:" if is_response else "") + title)
+        else:
+            embed = discord.Embed(color=0x35e002, title="Msg Assistant - " + title)
+        for tag in tags:
+            color = sum([ord(c) for c in tag]) % 5
+            embed.add_field(name="​", value="```{}{}```".format(EmbedsManager.colors[color], tag), inline=True)
+        parts = [msg[i:i+1021] for i in range(0, len(msg), 1021)]
+        embed.add_field(name="{}\n{}".format(author, date.strftime("%a, %d %b %Y %H:%M:%S %Z")),
+                        value=parts[0], inline=False)
+        for i in range(1, len(parts)):
+            embed.add_field(name="​", value="..." + parts[i], inline=False)
+        embed.set_footer(text=group)
+        return embed
+
+    @staticmethod
+    def newsgroup_embed(title, tags, author, date: datetime, group, is_response):
         if is_response:
             embed = discord.Embed(color=0xc40c0c, title="Re:" + title)
         else:
@@ -34,10 +51,8 @@ class EmbedsManager:
         for tag in tags:
             color = sum([ord(c) for c in tag]) % 5
             embed.add_field(name="​", value="```{}{}```".format(EmbedsManager.colors[color], tag), inline=True)
-        parts = [msg[i:i+1021] for i in range(0, len(msg), 1021)]
-        embed.add_field(name="{}\n{}".format(author, date.strftime("%a, %d %b %Y %H:%M:%S %Z")), value=parts[0], inline=False)
-        for i in range(1, len(parts)):
-            embed.add_field(name="​", value="..." + parts[i], inline=False)
+        embed.add_field(name="{}\n{}".format(author, date.strftime("%a, %d %b %Y %H:%M:%S %Z")),
+                        value="​", inline=False)
         embed.set_footer(text=group)
         return embed
 
@@ -46,9 +61,10 @@ class EmbedsManager:
         if is_response:
             embed = discord.Embed(color=0xc40c0c)
         else:
-            embed = discord.Embed(color=0x0080ff)
+            embed = discord.Embed(color=0xf56200)
         parts = [msg[i:i+1021] for i in range(0, len(msg), 1021)]
-        embed.add_field(name="{}\n{}".format(author, date.strftime("%a, %d %b %Y %H:%M:%S %Z")), value=parts[0], inline=False)
+        embed.add_field(name="{}\n{}".format(author, date.strftime("%a, %d %b %Y %H:%M:%S %Z")),
+                        value=parts[0], inline=False)
         for i in range(1, len(parts)):
             embed.add_field(name="​", value="..." + parts[i], inline=False)
         embed.set_footer(text=group)
