@@ -72,6 +72,7 @@ class NewsGroupManager:
     async def print_news(self, group: Dict, news_id: str):
         info = self.get_info_from_news(news_id)
         author = info["From"]
+        ref = None if "References" not in info else info["References"]
         match = re.search('.*<(.*)>', author)
         mail = match.group(1) if match else ""
         subject = info["Subject"]
@@ -81,12 +82,6 @@ class NewsGroupManager:
         content = ""
         for l in body.lines:
             content += l.decode(self.encoding) + "\n"
-
-        # handle response
-        is_response = False
-        if subject[:4] == "Re: ":
-            subject = subject[4:]
-            is_response = True
 
         is_assistant = mail in self.assistants
         # get the tags
@@ -103,9 +98,9 @@ class NewsGroupManager:
         # print msg in every channel newsgroup_filler_embed
         if is_assistant:
             embed = EmbedsManager.newsgroup_embed_assistant(subject, tags, msg[0], author,
-                                                            date, group["name"], is_response)
+                                                            date, group["name"], ref is not None)
         else:
-            embed = EmbedsManager.newsgroup_embed(subject, tags, author, date, group["name"], is_response)
+            embed = EmbedsManager.newsgroup_embed(subject, tags, author, date, group["name"], ref is not None)
 
         for guild in group['channels']:
             await self.client.get_channel(int(guild['channel_id'])).send(embed=embed)
@@ -114,7 +109,7 @@ class NewsGroupManager:
             return
 
         for i in range(1, len(msg)):
-            embed = EmbedsManager.newsgroup_filler_embed("..." + msg[i], author, date, group["name"], is_response)
+            embed = EmbedsManager.newsgroup_filler_embed("..." + msg[i], author, date, group["name"], ref is not None)
             for guild in group['channels']:
                 await self.client.get_channel(int(guild['channel_id'])).send(embed=embed)
 
