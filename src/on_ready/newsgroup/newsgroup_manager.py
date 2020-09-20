@@ -86,6 +86,8 @@ class NewsGroupManager:
         is_assistant = mail in self.assistants
         # get the tags
         tags = []
+        if subject[:4] != "Re: ":
+            subject = subject[4:]
         s = subject.split("]", 1)
         while len(s) != 1:
             tags.append((s[0])[1:])
