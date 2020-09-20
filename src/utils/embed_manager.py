@@ -28,7 +28,9 @@ class EmbedsManager:
     @staticmethod
     def newsgroup_embed_assistant(title, tags, msg, author, date: datetime, group, is_response):
         if is_response:
-            embed = discord.Embed(color=0x35e002, title="Msg Assistant - " + ("Re:" if is_response else "") + title)
+            if title[:4] != "Re: ":
+                title = "Re: " + title
+            embed = discord.Embed(color=0x35e002, title="Msg Assistant - " + title)
         else:
             embed = discord.Embed(color=0x35e002, title="Msg Assistant - " + title)
         for tag in tags:
@@ -45,7 +47,9 @@ class EmbedsManager:
     @staticmethod
     def newsgroup_embed(title, tags, author, date: datetime, group, is_response):
         if is_response:
-            embed = discord.Embed(color=0xc40c0c, title="Re:" + title)
+            if title[:4] != "Re: ":
+                title = "Re: " + title
+            embed = discord.Embed(color=0xc40c0c, title=title)
         else:
             embed = discord.Embed(color=0xf56200, title=title)
         for tag in tags:
@@ -58,10 +62,7 @@ class EmbedsManager:
 
     @staticmethod
     def newsgroup_filler_embed(msg, author, date: datetime, group, is_response):
-        if is_response:
-            embed = discord.Embed(color=0xc40c0c)
-        else:
-            embed = discord.Embed(color=0xf56200)
+        embed = discord.Embed(color=0x35e002)
         parts = [msg[i:i+1021] for i in range(0, len(msg), 1021)]
         embed.add_field(name="{}\n{}".format(author, date.strftime("%a, %d %b %Y %H:%M:%S %Z")),
                         value=parts[0], inline=False)
